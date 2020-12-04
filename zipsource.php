@@ -1,10 +1,7 @@
-<?php
-
-/**
- * Zip souce for share hosting
- */
-
+<?php 
 set_time_limit(1000);
+
+define('BASE_PATH', __DIR__ . DIRECTORY_SEPARATOR);
 
 function pathExists($path){
     return file_exists($path);
@@ -56,9 +53,50 @@ function zip($pathDir, $pathZipFile = null, $excludeDirs = []){
     return true;
 }
 
-$src = realpath(__DIR__ . '/');
-$dst = $src . DIRECTORY_SEPARATOR . 'source_' . date('YmdHis') . '.zip';
+///////////
+// BEGIN //
+///////////
 
-zip($src, $dst, ['upload']);
+$res = [
+    'done' => 0,
+    'name' => '',
+    'time' => 0
+];
+$log = BASE_PATH . 'logs.txt';
+// Create log
+if (!pathExists($log)) {
+    file_put_contents($log, json_encode($res));
+}
+if (isset($_POST['zip_source']) && $_POST['zip_source'] == '1') {
+    $src = BASE_PATH;
+    $dstName = 'zipsouce.zip';
+    $dst = BASE_PATH . $dstName;
+    if (file_exists($dst)) {
+        unlink($dst);
+    }
+    $res['name'] = $dstName;
+    $res['time'] = date('Y/m/d H:i:s');
+    file_put_contents($log, json_encode($res));
+    zip($src, $dst, ['upload']);
+    $res['done'] = 1;
+    file_put_contents($log, json_encode($res));
+    header('location: ');
+}
 
-echo "OK-{$dst}";
+$dataLog = (array)json_decode(file_get_contents($log));
+$downPath = BASE_PATH . 'zipsouce.zip';
+$downName = 'zipsouce.zip';
+
+if (!pathExists($downPath)) {
+    $downName = '#';
+}
+?>
+
+<form action="" method="POST" accept-charset="utf-8">
+    <input type="hidden" name="zip_source" value="1">
+    <button type="submit">Zip</button>
+</form>
+
+<div>
+    File zip: <?php echo ($downName == '#' ? '...' : "<a href='{$downName}'>{$downName}</a>") ?>
+</div>
